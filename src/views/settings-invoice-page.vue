@@ -1,69 +1,50 @@
 <template>
   <div>
     <v-card class="mb-8">
-      <v-card-text>
-        <v-col cols="12" sm="6" md="8" class="py-0">
-          <v-text-field
-            @change="tryEnableTranslateButton"
-            class="py-0"
-            :placeholder="localeWords['TxtToTranslate']"
-            filled
-            v-model="textToTranslate"
-          />
-        </v-col>
-      </v-card-text>
-
-      <v-card-text class="py-0">
+      <v-card-title class="ml-4">{{
+        localeWords["InvoiceTitle"]
+      }}</v-card-title>
+      <v-card-text class="pa-0">
         <v-row>
-          <v-col cols="12" sm="3" md="4" class="py-0">
+          <v-col cols="12" sm="6" md="6">
             <v-select
-              @change="tryEnableTranslateButton"
-              class="ml-4"
-              v-model="fromLanguageCode"
-              :label="localeWords['FromLanguage']"
-              :items="languages"
-              item-text="name"
-              item-value="code"
-            />
-          </v-col>
-          <v-spacer />
-          <v-col cols="12" sm="3" md="4">
-            <v-select
-              @change="tryEnableTranslateButton"
-              class="px-4"
-              :label="localeWords['ToLanguage']"
-              v-model="toLanguageCode"
-              :items="languages"
-              item-text="name"
-              item-value="code"
+              class="ml-8"
+              v-model="selectedWord"
+              :label="localeWords['Cmb4ReTranslate']"
+              :items="invoicewords"
+              @change="tryEnableSaveButton"
             />
           </v-col>
         </v-row>
       </v-card-text>
+
       <v-card-actions>
-        <v-btn
-          :disabled="disableTranslateBtn"
-          class="ml-5 mb-5"
-          :loading="saving"
-          @click="translateClick"
-          color="light-green"
-          >{{ localeWords["btnTranslate"] }}</v-btn
-        >
+        <v-row>
+          <v-col cols="12" sm="6" md="8">
+            <br />
+            <v-text-field
+              clearable
+              class="ml-4"
+              v-model="replacementWord"
+              :placeholder="localeWords['TxtReplace']"
+              @change="tryEnableSaveButton"
+              filled
+            ></v-text-field>
+          </v-col>
+        </v-row>
       </v-card-actions>
-    </v-card>
-    <v-card>
-      <v-card-text>
-        <v-col cols="12" sm="8" md="12">
-          <v-text-field
-            readonly
-            :label="localeWords['txtTranslationDisplayed']"
-            large
-            outlined
-            color="black"
-            v-model="translation"
-          ></v-text-field>
-        </v-col>
-      </v-card-text>
+
+      <v-card-actions>
+        <v-row>
+          <v-btn
+            :disabled="!ready2Save"
+            class="ml-8"
+            @click="updateTranslation()"
+            color="light-green"
+            >{{ localeWords["btnSave"] }}</v-btn
+          >
+        </v-row>
+      </v-card-actions>
     </v-card>
   </div>
 </template>
@@ -73,72 +54,39 @@ import { call, get } from "vuex-pathify";
 export default {
   data() {
     return {
-      toLanguageCode: "",
-      fromLanguageCode: "xx",
-      textToTranslate: "",
+      selectedWord: "",
+      replacementWord: "",
       saving: false,
-      translatedText: "Translated text here",
-      ready2Translate: false,
-      disableTranslateBtn: true,
+      ready2Save: false,
     };
   },
-  async created() {
-    //await this.loadLanguages();
-  },
   methods: {
-    loadLanguages: call("languageStore/loadLanguages"),
-    async oldtranslateClick() {
-      const ToLanguage = "detect";
-      const FromLanguage = "detect";
-      const ToLanguageCode = this.toLanguageCode;
-      const FromLanguageCode = this.fromLanguageCode;
-      const TextToTranslate = this.textToTranslate;
-      const data = {
-        ToLanguage,
-        FromLanguage,
-        ToLanguageCode,
-        FromLanguageCode,
-        TextToTranslate,
-      };
-      console.log(data);
-    },
-    ...call("languageStore", ["loadLanguages", "testTranslation"]),
-    async translateClick() {
+    ...call("languageStore", ["UpdateInvoiceTranslation", "fillInvoiceWords"]),
+    async updateTranslation() {
       this.saving = true;
-      const ToLanguage = "detect";
-      const FromLanguage = "detect";
-      const ToLanguageCode = this.toLanguageCode;
-      const FromLanguageCode = this.fromLanguageCode;
-      const TextToTranslate = this.textToTranslate;
-      const data = {
-        ToLanguage,
-        FromLanguage,
-        ToLanguageCode,
-        FromLanguageCode,
-        TextToTranslate,
+      const translateObject = {
+        SelectedWord: this.selectedWord,
+        ReplacementWord: this.replacementWord,
       };
       try {
-        this.translatedText = await this.testTranslation(data);
+        await this.UpdateInvoiceTranslation(translateObject);
+        await this.fillInvoiceWords();
+        this.replacementWord = "";
       } finally {
         this.saving = false;
       }
     },
-    tryEnableTranslateButton() {
-      this.disableTranslateBtn =
-        this.textToTranslate === null ||
-        this.textToTranslate === "" ||
-        this.toLanguageCode === null ||
-        this.toLanguageCode === "" ||
-        this.fromLanguageCode === null ||
-        this.fromLanguageCode === "";
+    tryEnableSaveButton() {
+      this.ready2Save =
+        this.selectedWord != null &&
+        this.replacementWord != null &&
+        this.selectedWord != "" &&
+        this.replacementWord != "";
     },
   },
   computed: {
-    localeCode: get("languageStore/selectedLocaleCode"),
     localeWords: get("languageStore/localeWordDict"),
-    languages: get("languageStore/languages"),
-    ...get("languageStore"),
-    translation: get("languageStore/Translation"),
+    invoicewords: get("languageStore/invoiceWords"),
   },
 };
 </script>
