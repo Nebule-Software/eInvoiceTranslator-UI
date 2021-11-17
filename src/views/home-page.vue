@@ -22,13 +22,21 @@
             <v-col cols="11" sm="3" md="5" class="ml-6">
               <v-file-input
                 @change="tryEnableSubmitButton"
-                class="pa-0, ma-0"
+                class="ma-0"
                 v-model="XMLFile"
                 name="attachment"
                 accept="text/xml"
                 prepend-icon
                 :placeholder="localeWords['inptUpload']"
               ></v-file-input>
+            </v-col>
+            <v-col cols="11" sm="3" md="5" class="ml-6">
+              <v-text-field
+                class="invoice-number-textbox ma-0"
+                name="attachment"
+                label="Invoice Number"
+                type="text"
+              />
             </v-col>
           </v-row>
         </v-card-text>
@@ -170,3 +178,9 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.invoice-number-textbox {
+  width: 175px;
+}
+</style>
